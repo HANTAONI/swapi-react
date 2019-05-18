@@ -13,18 +13,29 @@ class PeopleList extends Component {
     this.getPeopleInformation = this.getPeopleInformation.bind(this);
   }
   getPeopleInformation() {
-    axios.get('https://swapi.co/api/people/')
-      .then(res => {
-        console.log(res.data.results);
-        let peopleList = res.data.results;
-        this.setState({ peopleData: peopleList});
-        
-      })
+    let totalPageData = [];
+    let promises = [];
+    for (let i = 1; i < 10; i++) {
+      promises.push(`https://swapi.co/api/people/?page=${i}`);
+    }
+    console.log(promises);
+    axios.all(promises.map(p => axios.get(p)))
+     .then(axios.spread((...responses) => {
+       responses.forEach(res => {
+         totalPageData = totalPageData.concat(res.data.results);
+         console.log(res.data.results);
+         console.log(totalPageData)
+       })
+       this.setState({ peopleData: totalPageData});
+     })
+    )
+    
   }
 
   componentDidMount() {
     this.getPeopleInformation()
   }
+  
   render() {
     const columns = [
       {
@@ -76,12 +87,14 @@ class PeopleList extends Component {
         } 
         
       }]
+    console.log(this.state.peopleData)
     return (
       <div>
         <ReactTable
           data={this.state.peopleData}
           columns={columns} 
           className="-striped -highlight"
+          pageSize={87}
         />
       </div>
     );
